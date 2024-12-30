@@ -1,0 +1,5 @@
+speechrecognition
+portaudio
+pyaudio
+streamlit
+streamlit-webrtc

@@ -55,8 +55,22 @@ if st.session_state.page == "Affirmation Recognition":
     for index, affirmation in enumerate(affirmations):
         st.subheader(f"Please say: '{affirmation}'")
 
-        # Audio input widget for recording user input
-        audio_input = st.audio_input(f"Record audio for '{affirmation}'", key=affirmation)
+        # Apply custom CSS to reduce the space between subheader and audio input
+        st.markdown(
+            """
+            <style>
+            .stAudioInput {
+                margin-top: -40px;
+            }
+            </style>
+            """, unsafe_allow_html=True)
+
+        # Audio input widget for recording user input with hidden label
+        audio_input = st.audio_input(
+            f"Record audio for '{affirmation}'",
+            key=affirmation,
+            label_visibility="hidden"  # Hide the label while keeping it for accessibility
+        )
 
         # Run recognition only if new audio is recorded
         if audio_input and audio_input != st.session_state.recorded_audio[index]:

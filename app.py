@@ -2,6 +2,7 @@ import streamlit as st
 import speech_recognition as sr
 from audio_recorder_streamlit import audio_recorder
 import io
+import time
 
 # Initialize the recognizer
 recognizer = sr.Recognizer()
@@ -33,9 +34,15 @@ if "score" not in st.session_state:
 if "page" not in st.session_state:
     st.session_state.page = "Affirmation Recognition"  # Default to the recognition page
 
+# Track whether recording is ongoing
+if "is_recording" not in st.session_state:
+    st.session_state.is_recording = False  # Track recording state
+if "recorded_audio" not in st.session_state:
+    st.session_state.recorded_audio = []  # Store recorded audio data
+
 def recognize_affirmation(audio_data):
+    """Recognize the affirmation from audio data."""
     try:
-        # Use speech_recognition's Google API to recognize speech
         text = recognizer.recognize_google(audio_data)
         return text
     except sr.UnknownValueError:
@@ -43,29 +50,54 @@ def recognize_affirmation(audio_data):
     except sr.RequestError:
         return "Sorry, the service is down."
 
-# Display the current page content based on the session state
+def record_audio():
+    """Function to continuously record audio."""
+    if st.session_state.is_recording:
+        audio_data = audio_recorder()
+        if audio_data:
+            st.session_state.recorded_audio.append(audio_data)  # Append audio data to session state
+            st.write("Recording... (Click 'Stop Recording' to stop)")
+        else:
+            st.write("Audio not detected yet.")
+    else:
+        st.write("Click 'Start Recording' to start.")
+
+# Display the current page content based on session state
 if st.session_state.page == "Affirmation Recognition":
     st.title("Affirmation Speech Recognition")
     st.markdown("<h3 style='text-align: center; font-size: 16px;'>Boost your confidence and positivity with our Affirmation Speech Recognition App! Practicing affirmations helps strengthen self-belief and reduce stress. Simply say each affirmation aloud, and the app will recognize and confirm it. Track your progress and see how many affirmations you’ve mastered. Start building a more positive mindset today! </h3>", unsafe_allow_html=True)
 
     # Process each affirmation
-    for idx, affirmation in enumerate(affirmations):
+    for affirmation in affirmations:
         st.subheader(f"Please say: '{affirmation}'")
 
-        # Record audio using audio_recorder_streamlit, providing a unique key
-        audio_data = audio_recorder(key=f"audio_recorder_{idx}")
+        # Start recording when the user clicks the button for the current affirmation
+        if st.button(f"Listen for '{affirmation}'"):
+            st.session_state.is_recording = True
+            st.session_state.recorded_audio = []  # Reset the audio data for new recording
+            st.write("Recording started... Please say the affirmation aloud.")
 
-        if audio_data:
-            # Convert the raw audio data (which is in bytes) into an AudioData object
-            audio_file = io.BytesIO(audio_data)  # Wrap the byte data in a BytesIO object
+        # Stop recording when the user clicks the button again
+        if st.button(f"Stop Recording for '{affirmation}'"):
+            st.session_state.is_recording = False
+            st.write("Recording stopped.")
 
-            # Now use SpeechRecognition to process the audio
+        # Call the function to handle audio recording
+        record_audio()
+
+        # If audio has been recorded, process and display the recognized text
+        if st.session_state.recorded_audio:
+            st.write("Processing the recorded audio...")
+
+            # Combine the recorded audio data
+            combined_audio = b''.join(st.session_state.recorded_audio)
+            audio_file = io.BytesIO(combined_audio)
+
+            # Process the audio with speech_recognition
             with sr.AudioFile(audio_file) as source:
                 audio_data = recognizer.record(source)
 
-            # Recognize the audio using Google Speech API
             recognized_text = recognize_affirmation(audio_data)
-
             if recognized_text.lower() == affirmation.lower():
                 st.success(f"Affirmation detected: '{affirmation}'")
                 st.session_state.score += 1  # Increment score if affirmation is correctly recognized

@@ -1,5 +1,4 @@
 speechrecognition
-portaudio
 pyaudio
 streamlit
-streamlit-webrtc
+audio-recorder-streamlit

@@ -65,7 +65,7 @@ if st.session_state.page == "Affirmation Recognition":
             </style>
             """, unsafe_allow_html=True)
 
-        # Audio input widget for recording user input with hidden label
+        # Audio input widget for recording user input
         audio_input = st.audio_input(
             f"Record audio for '{affirmation}'",
             key=affirmation,
